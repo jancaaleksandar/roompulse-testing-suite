@@ -69,3 +69,9 @@ class SyncResponse(TypedDict):
     fingerprint : ExtraFingerprints
     request_headers : dict[str, str]
     
+    
+class TestResults(TypedDict):
+    test_passed: bool
+    test_proof_url: NotRequired[str]
+    test_expected_outcome: Any
+    test_proxy_url: NotRequired[str]

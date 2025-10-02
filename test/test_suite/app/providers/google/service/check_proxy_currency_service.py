@@ -1,34 +1,19 @@
 import json
-from typing import Any, NotRequired, TypedDict
-
-from ....types import ProxyParameters, UserInput
+from ....types import UserInput
 from ..common.clean_response_common import CleanResponse
 from ..parsers.place_parser import SinglePlaceParser
 from ..request_google import google_request
+from ....utils.get_all_proxies import get_all_proxies_from_file
+from ....exceptions import MissingProxyURL, CheckProxyCurrencyServiceError
+from ....types import TestResults
 
-
-class TestResults(TypedDict):
-    test_passed: bool
-    test_proof_url: NotRequired[str]
-    test_expected_outcome: Any
-    test_proxy_url: NotRequired[str]
-
-
-class CheckProxyCurrencyServiceError(Exception):
-    pass
-
-
-class MissingProxyURL(Exception):
-    pass
 
 
 def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
     if params["request_proxy"] is None:
         raise MissingProxyURL("Proxy URL is required")
-
+    all_proxies = get_all_proxies_from_file("test/test_suite/app/providers/google/data/proxy_testing.json")
     test_results: list[TestResults] = []
-    with open("test/test_suite/app/providers/google/data/proxy_testing.json") as f:
-        all_proxies: list[ProxyParameters] = json.load(f)
 
     for proxy in all_proxies:
         proxy_url = (
