@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import TypedDict, cast
+from wsgiref.validate import check_input
+
 from ...types import UserInput
 from hotel_info_lib.common.common_calculate_check_out_date import calculate_check_out_date
 from hotel_info_lib.common.common_datetime_to_date import datetime_to_date
@@ -20,8 +22,9 @@ def get_booking_config(params: UserInput) -> BookingConfig:
     base_url = "https://www.booking.com"
     # if str(params) == "MOBILE":
     #     base_url = "https://m.booking.com"
+    check_in_datetime = datetime.strptime(params["request_check_in_date"], "%Y-%m-%d")
     check_out_date_datetime = calculate_check_out_date(
-        start_date=cast(datetime, params["request_check_in_date"]), number_of_nights=params["request_nights"]
+        start_date=check_in_datetime, number_of_nights=params["request_nights"]
     )
     check_out_date = datetime_to_date(check_out_date_datetime)
     url = f"{base_url}/hotel/{params['provider_id']}.en-gb.html?checkin={params['request_check_in_date']}&checkout={check_out_date}&dist=0&group_adults={params['request_adults']}&group_children=0&hapos=1&req_adults={params['request_adults']}&req_children=0&selected_currency={currency}"

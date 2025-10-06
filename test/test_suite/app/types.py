@@ -50,7 +50,7 @@ class UserInput(TypedDict):
     request_adults : int
     request_proxy : str | None
     request_request_type : Literal["GET", "POST"]
-    request_provider : Literal["EXPEDIA", "TLSBROWSERLEAK", "HTTPBIN", "HILTON", "GOOGLE"]
+    request_provider : Literal["EXPEDIA", "TLSBROWSERLEAK", "HTTPBIN", "HILTON", "GOOGLE", "BOOKING"]
     request_maximum_retries : int
     request_type : Literal["PROXY_TESTING"]
     request_expected_outcome : NotRequired[Any]
@@ -73,5 +73,6 @@ class SyncResponse(TypedDict):
 class TestResults(TypedDict):
     test_passed: bool
     test_proof_url: NotRequired[str]
+    test_proof_status_code: NotRequired[int]
     test_expected_outcome: Any
     test_proxy_url: NotRequired[str]

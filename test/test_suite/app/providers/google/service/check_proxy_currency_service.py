@@ -25,7 +25,7 @@ def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
             print(f"\nTrying proxy: {proxy_url}")
 
             response = google_request(params)
-            with open("test/test_suite/app/providers/google/debug/response.json", "w") as f:
+            with open("test/test_suite/app/providers/google/debug/response.html", "w") as f:
                 json.dump(response, f, indent=4)
 
             if not response["successfully_scraped"]:
