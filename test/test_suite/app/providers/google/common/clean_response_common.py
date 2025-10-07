@@ -48,5 +48,8 @@ class CleanResponse:
         except CleanResponseError as e:
             print(f"Failed to clean response: {e!s}")
             successfully_cleaned = False
+
+        with open("test/test_suite/app/providers/google/debug/cleaned_response.json", "w") as f:
+            json.dump(cleaned_json, f, indent=4)
         
         return {"success": successfully_cleaned, "data": cleaned_json}

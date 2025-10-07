@@ -12,10 +12,10 @@ from ....types import TestResults
 def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
     if params["request_proxy"] is None:
         raise MissingProxyURL("Proxy URL is required")
-    all_proxies = get_all_proxies_from_file("test/test_suite/app/providers/google/data/proxy_testing.json")
+    all_proxies = get_all_proxies_from_file("test/test_suite/app/data/proxy_testing.json")
     test_results: list[TestResults] = []
 
-    for proxy in all_proxies:
+    for proxy in all_proxies[20:23]:
         proxy_url = (
             f"http://{proxy['proxy_username']}:{proxy['proxy_password']}@{proxy['proxy_host']}:{proxy['proxy_port']}"
         )
@@ -37,29 +37,26 @@ def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
                 print(f"Failed to clean response with proxy {proxy_url}")
                 continue
 
-            parsed_providers = SinglePlaceParser(response=cleaned_response["data"]).get_place_details()
-            if not parsed_providers["successfully_parsed"]:
+            single_place_parser_response = SinglePlaceParser(response=cleaned_response["data"]).get_place_details()
+            if not single_place_parser_response["successfully_parsed"]:
                 print(f"Failed to parse providers with proxy {proxy_url}")
                 continue
 
-            if not parsed_providers["providers"] or len(parsed_providers["providers"]) == 0:
+            if not single_place_parser_response["providers"] or len(single_place_parser_response["providers"]) == 0:
                 print(f"No providers found with proxy {proxy_url}")
                 continue
 
             with open("test/test_suite/app/providers/google/debug/parsed_providers.json", "w") as f:
-                json.dump(parsed_providers, f, indent=4)
+                json.dump(single_place_parser_response, f, indent=4)
 
-            for provider in parsed_providers["providers"]:
+            for provider in single_place_parser_response["providers"]:
                 provider_url = provider.get("provider_offer_url", None)
                 if not provider_url:
                     print("No provider URL found")
                     continue
                 print(f"Provider URL: {provider_url}")
                 print(f"Expected outcome: {expected_outcome}")
-                if (
-                    f"country={expected_outcome}" in provider_url.lower()
-                    or f"code={expected_outcome}" in provider_url.lower()
-                ):
+                if params["request_expected_outcome"] == single_place_parser_response["country_code"] and provider_url[-1] in ["/",]:
                     print(f"Found matching provider with proxy {proxy_url}")
                     test_results.append(
                         TestResults(

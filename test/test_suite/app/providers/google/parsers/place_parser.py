@@ -1,3 +1,5 @@
+import json
+from textwrap import indent
 from typing import Any, TypedDict
 
 from ..types_google import Provider
@@ -8,6 +10,7 @@ class SinglePlaceParserResponse(TypedDict):
     sold_out: bool
     providers: list[Provider]
     successfully_parsed: bool
+    country_code: str
 
 
 class SinglePlaceParserError(Exception):
@@ -48,10 +51,22 @@ class SinglePlaceParser:
             print(f"Error while getting providers: {e!s}")
             return None
 
+    def _get_country_code(self) -> str | None:
+        country_code = self.response[6][113]
+        if country_code:
+            return country_code
+        else:
+            return None
+
     def get_place_details(self) -> SinglePlaceParserResponse:
         provider_details_list: list[Provider] = []
         successfully_parsed = False
         providers = self.get_providers()
+        country_code = self._get_country_code()
+        if country_code is None:
+            raise SinglePlaceParserError("Country code not found")
+        with open("test/test_suite/app/providers/google/debug/parsed_providers.json", "w") as f:
+            json.dump(providers, f,  indent=4)
         if providers:
             for provider in providers:
                 provider_details = ParseSingleProviderDetails(provider).get_provider_details()
@@ -60,7 +75,7 @@ class SinglePlaceParser:
             successfully_parsed = True
 
             return SinglePlaceParserResponse(
-                sold_out=False, providers=provider_details_list, successfully_parsed=successfully_parsed
+                sold_out=False, providers=provider_details_list, successfully_parsed=successfully_parsed, country_code=country_code
             )
 
         else:
