@@ -76,3 +76,4 @@ class TestResults(TypedDict):
     test_proof_status_code: NotRequired[int]
     test_expected_outcome: Any
     test_proxy_url: NotRequired[str]
+    test_proxy_try : NotRequired[int]

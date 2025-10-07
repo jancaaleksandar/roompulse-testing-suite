@@ -16,78 +16,84 @@ def check_proxy_status_code_service(params: UserInput) -> list[TestResults]:
     test_results: list[TestResults] = []
     expected_outcome = 200  # We expect a 200 status code
 
-    for proxy in all_proxies:
-        proxy_url = (
-            f"http://{proxy['proxy_username']}:{proxy['proxy_password']}@{proxy['proxy_host']}:{proxy['proxy_port']}"
-        )
+    for proxy in all_proxies[:2]:
+        for i in range(10):
+            proxy_url = (
+                f"http://{proxy['proxy_username']}:{proxy['proxy_password']}@{proxy['proxy_host']}:{proxy['proxy_port']}"
+            )
 
-        try:
-            params["request_proxy"] = proxy_url
-            print(f"\nTrying proxy: {proxy_url}")
+            try:
+                params["request_proxy"] = proxy_url
+                print(f"\nTrying proxy: {proxy_url}")
 
-            booking_request_response : BookingRequestResponse = booking_request(params)
+                booking_request_response : BookingRequestResponse = booking_request(params)
 
-            with open("test/test_suite/app/providers/booking/debug/response.html", "w") as f:
-                f.write(booking_request_response['scraped_data']['actual_response'].text)
+                with open("test/test_suite/app/providers/booking/debug/response.html", "w") as f:
+                    f.write(booking_request_response['scraped_data']['actual_response'].text)
 
-            if not booking_request_response["successfully_scraped"]:
-                print(f"Failed with proxy {proxy_url}")
+                if not booking_request_response["successfully_scraped"]:
+                    print(f"Failed with proxy {proxy_url}")
+                    test_results.append(
+                        TestResults(
+                            test_passed=False,
+                            test_expected_outcome=expected_outcome,
+                            test_proxy_url=proxy_url,
+                            test_proxy_try=i + 1,
+                        )
+                    )
+                    continue
+
+
+                status_code = booking_request_response['scraped_data']['actual_response'].status_code
+                if status_code == expected_outcome:
+                    test_results.append(
+                        TestResults(
+                            test_passed=True,
+                            test_proof_status_code=status_code,
+                            test_expected_outcome=expected_outcome,
+                            test_proxy_url=proxy_url,
+                            test_proxy_try=i + 1,
+                        )
+                    )
+                else:
+                    test_results.append(
+                        TestResults(
+                            test_passed=False,
+                            test_proof_status_code=status_code,
+                            test_expected_outcome=expected_outcome,
+                            test_proxy_url=proxy_url,
+                            test_proxy_try=i + 1,
+                        )
+                    )
+            except MissingProxyURL:
+                print("Proxy URL is required")
+                continue
+
+            except (BookingRequestError, CheckProxyCurrencyServiceError, ValueError, AttributeError, TypeError, KeyError) as e:
+                print(f"Error with proxy {proxy_url}: {e!s}")
                 test_results.append(
                     TestResults(
                         test_passed=False,
                         test_expected_outcome=expected_outcome,
                         test_proxy_url=proxy_url,
+                        test_proxy_try=i + 1,
                     )
                 )
                 continue
 
-
-            status_code = booking_request_response['scraped_data']['actual_response'].status_code
-            if status_code == expected_outcome:
-                test_results.append(
-                    TestResults(
-                        test_passed=True,
-                        test_proof_status_code=status_code,
-                        test_expected_outcome=expected_outcome,
-                        test_proxy_url=proxy_url,
-                    )
-                )
-            else:
+            except Exception:
+                # Unexpected error: print full traceback to help diagnose
+                print(f"Unexpected error with proxy {proxy_url}:")
+                print(traceback.format_exc())
                 test_results.append(
                     TestResults(
                         test_passed=False,
-                        test_proof_status_code=status_code,
                         test_expected_outcome=expected_outcome,
                         test_proxy_url=proxy_url,
+                        test_proxy_try=i + 1,
                     )
                 )
-        except MissingProxyURL:
-            print("Proxy URL is required")
-            continue
-
-        except (BookingRequestError, CheckProxyCurrencyServiceError, ValueError, AttributeError, TypeError, KeyError) as e:
-            print(f"Error with proxy {proxy_url}: {e!s}")
-            test_results.append(
-                TestResults(
-                    test_passed=False,
-                    test_expected_outcome=expected_outcome,
-                    test_proxy_url=proxy_url,
-                )
-            )
-            continue
-
-        except Exception:
-            # Unexpected error: print full traceback to help diagnose
-            print(f"Unexpected error with proxy {proxy_url}:")
-            print(traceback.format_exc())
-            test_results.append(
-                TestResults(
-                    test_passed=False,
-                    test_expected_outcome=expected_outcome,
-                    test_proxy_url=proxy_url,
-                )
-            )
-            continue
+                continue
 
     return test_results
 
