@@ -15,7 +15,7 @@ def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
     all_proxies = get_all_proxies_from_file("test/test_suite/app/data/proxy_testing.json")
     test_results: list[TestResults] = []
 
-    for proxy in all_proxies[20:23]:
+    for proxy in all_proxies:
         proxy_url = (
             f"http://{proxy['proxy_username']}:{proxy['proxy_password']}@{proxy['proxy_host']}:{proxy['proxy_port']}"
         )
@@ -56,7 +56,7 @@ def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
                     continue
                 print(f"Provider URL: {provider_url}")
                 print(f"Expected outcome: {expected_outcome}")
-                if params["request_expected_outcome"] == single_place_parser_response["country_code"] and provider_url[-1] in ["/",]:
+                if str(expected_outcome) == str(single_place_parser_response["country_code"]):
                     print(f"Found matching provider with proxy {proxy_url}")
                     test_results.append(
                         TestResults(
@@ -70,7 +70,7 @@ def check_proxy_currency_service(params: UserInput) -> list[TestResults]:
                     break
             else:
                 # This executes only if the loop completes without breaking (no match found)
-                print(f"No match found for expected outcome '{expected_outcome}' in any provider URL")
+                print(f"No match found for expected outcome '{expected_outcome}' in {single_place_parser_response["country_code"]}")
                 test_results.append(
                     TestResults(
                         test_passed=False,

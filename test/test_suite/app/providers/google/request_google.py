@@ -24,11 +24,15 @@ def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleReques
     google_config = get_google_night_price_config(params)
     request_params: RequestParameters = {
         "url": google_config["url"],
-        "request_proxy": google_config["proxy_url"],
+        "request_proxy": params["request_proxy"],
         "request_headers": google_config["headers"],
         "request_cookies": google_config["cookies"],
         "request_type": google_config["type"],
     }
+
+    # Only add request_proxy if it's not None
+    if params["request_proxy"] is not None:
+        request_params["request_proxy"] = params["request_proxy"]
 
     print(f"Request params: {request_params}")
 

@@ -16,7 +16,7 @@ def check_proxy_status_code_service(params: UserInput) -> list[TestResults]:
     test_results: list[TestResults] = []
     expected_outcome = 200  # We expect a 200 status code
 
-    for proxy in all_proxies[:2]:
+    for proxy in all_proxies:
         for i in range(10):
             proxy_url = (
                 f"http://{proxy['proxy_username']}:{proxy['proxy_password']}@{proxy['proxy_host']}:{proxy['proxy_port']}"

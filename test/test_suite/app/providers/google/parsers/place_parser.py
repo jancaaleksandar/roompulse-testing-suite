@@ -63,14 +63,12 @@ class SinglePlaceParser:
         successfully_parsed = False
         providers = self.get_providers()
         country_code = self._get_country_code()
-        if country_code is None:
-            raise SinglePlaceParserError("Country code not found")
         with open("test/test_suite/app/providers/google/debug/parsed_providers.json", "w") as f:
             json.dump(providers, f,  indent=4)
         if providers:
             for provider in providers:
                 provider_details = ParseSingleProviderDetails(provider).get_provider_details()
-                if provider_details["successfully_parsed"] and provider_details["provider"] is not None:
+                if provider_details["successfully_parsed"] and provider_details["provider"] and country_code is not None:
                     provider_details_list.append(provider_details["provider"])
             successfully_parsed = True
 
@@ -79,4 +77,4 @@ class SinglePlaceParser:
             )
 
         else:
-            return SinglePlaceParserResponse(sold_out=True, providers=[], successfully_parsed=successfully_parsed)
+            return SinglePlaceParserResponse(sold_out=True, providers=[], successfully_parsed=successfully_parsed, country_code=country_code)
