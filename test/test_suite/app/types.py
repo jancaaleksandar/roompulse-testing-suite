@@ -39,6 +39,7 @@ class ProxyParameters(TypedDict):
     proxy_username : str
     proxy_password : str
     proxy_iso : str
+    proxy_expected_outcome : NotRequired[Any]
     
 
     
@@ -53,7 +54,6 @@ class UserInput(TypedDict):
     request_provider : Literal["EXPEDIA", "TLSBROWSERLEAK", "HTTPBIN", "HILTON", "GOOGLE", "BOOKING"]
     request_maximum_retries : int
     request_type : Literal["PROXY_TESTING"]
-    request_expected_outcome : NotRequired[Any]
     
 
 class RequestParameters(TypedDict):
@@ -77,3 +77,4 @@ class TestResults(TypedDict):
     test_expected_outcome: Any
     test_proxy_url: NotRequired[str]
     test_proxy_try : NotRequired[int]
+    test_proxy_result : NotRequired[str]

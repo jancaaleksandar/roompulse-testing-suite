@@ -9,7 +9,8 @@ class CleanResponseError(Exception):
 
 class CleanResponseResponse(TypedDict):
     success: bool
-    data: dict[str, Any] | None
+    data: list
+
 
 
 class CleanResponse:
@@ -31,7 +32,8 @@ class CleanResponse:
         print("No match found for APP_INITIALIZATION_STATE")
         raise CleanResponseError("No match found for APP_INITIALIZATION_STATE") from None
 
-    def clean_json(self, json_data: list[Any]) -> str:
+    @staticmethod
+    def clean_json(json_data: list[Any]) -> str:
         target_array = cast(list[Any], json_data[3])
         if len(target_array) <= 6:
             raise CleanResponseError("Invalid target array structure")
@@ -40,7 +42,7 @@ class CleanResponse:
 
     def clean_response(self) -> CleanResponseResponse:
         successfully_cleaned = False
-        cleaned_json = None
+        cleaned_json = []
         try:
             json_data = self.get_json_from_html()
             cleaned_json = json.loads(self.clean_json(json_data))

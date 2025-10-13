@@ -10,6 +10,7 @@ from .config.google_night_price_config import get_google_night_price_config
 
 class GoogleRequestResponse(TypedDict):
     response: str
+    response_headers: dict[str, str] | None
     successfully_scraped: bool
 
 
@@ -21,6 +22,7 @@ def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleReques
     """Execute a Google request with retries"""
     response_data = None
     successfully_scraped = False
+    response_headers = None
     google_config = get_google_night_price_config(params)
     request_params: RequestParameters = {
         "url": google_config["url"],
@@ -43,6 +45,8 @@ def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleReques
 
             if response["response"].status_code == 200:
                 response_data = response["response"].text
+                response_headers = response["response"].headers
+                print(f"Response headers: {response_headers}")
                 successfully_scraped = True
                 print("successfully scraped")
                 break
@@ -56,4 +60,4 @@ def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleReques
                 print(f"Waiting {wait_seconds} seconds before next retry")
                 time.sleep(wait_seconds)
 
-    return GoogleRequestResponse(response=response_data or "", successfully_scraped=successfully_scraped)
+    return GoogleRequestResponse(response=response_data or "", successfully_scraped=successfully_scraped, response_headers=response_headers)
