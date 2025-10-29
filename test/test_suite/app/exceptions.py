@@ -4,3 +4,7 @@ class MissingProxyURL(Exception):
 
 class CheckProxyCurrencyServiceError(Exception):
     pass
+
+
+class ProxyConnectionEstablishmentError(Exception):
+    pass

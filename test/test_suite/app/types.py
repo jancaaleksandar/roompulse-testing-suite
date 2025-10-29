@@ -40,6 +40,7 @@ class ProxyParameters(TypedDict):
     proxy_password : str
     proxy_iso : str
     proxy_expected_outcome : NotRequired[Any]
+    proxy_location : NotRequired[str]
     
 
     

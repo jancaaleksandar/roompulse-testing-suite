@@ -1,6 +1,5 @@
 from typing import TypedDict
-from playwright.sync_api import sync_playwright, Playwright
-from playwright._impl._api_structures import ProxySettings
+from playwright.sync_api import Playwright, sync_playwright
 
 
 class ProxyStructureType(TypedDict):
@@ -43,9 +42,9 @@ def plain_playwright_browser_testing(playwright_initiated: Playwright, proxy: Pr
     try:
         print("DEBUG : trying to go to the page")
         page.goto(
-            url="https://www.booking.com",
+            # url="https://www.booking.com",
             # url="https://www.google.com/maps",
-            # url="https://www.google.com/maps/place/Best+Western+Plus+Philadelphia-Pennsauken+Hotel/@39.9347213,-75.0755581,16.57z/data=!4m11!3m10!1s0x89c6c96eba3e2c85:0xc420d3f9c9e9c59e!5m4!1s2025-12-21!2i3!4m1!1i2!8m2!3d39.93363!4d-75.07762!16s%2Fg%2F11fcttw9y1?entry=ttu&g_ep=EgoyMDI1MTAwOC4wIKXMDSoASAFQAw%3D%3D",
+            url="https://www.google.com/maps/place/Best+Western+Plus+Philadelphia-Pennsauken+Hotel/@39.9347213,-75.0755581,16.57z/data=!4m11!3m10!1s0x89c6c96eba3e2c85:0xc420d3f9c9e9c59e!5m4!1s2025-12-21!2i3!4m1!1i2!8m2!3d39.93363!4d-75.07762!16s%2Fg%2F11fcttw9y1?entry=ttu&g_ep=EgoyMDI1MTAwOC4wIKXMDSoASAFQAw%3D%3D",
             wait_until="domcontentloaded",
             timeout=120000
         )
@@ -92,20 +91,41 @@ def plain_playwright_browser_testing(playwright_initiated: Playwright, proxy: Pr
 
 def main() -> None:
     with sync_playwright() as playwright:
-
-        proxy: ProxyStructureType = {
-            "host": "199.7.143.97",
-            "port": 12323,
-            "username": "14ab59fe1cc10",
-            "password": "07c7b5a1e1"
-        }
-        #  non working us iproyal
         # proxy: ProxyStructureType = {
-        #     "host": "67.227.22.245",
+        #     "host": "scrapoxy.roompulse.internal",
+        #     "port": 8888,
+        #     "username": "kxvkzxpqtsvlbppsnkkfs",
+        #     "password": "ghjvta8ohh9qvgklicep1"
+        # }
+        # proxy: ProxyStructureType = {
+        #     "host": "scrapoxy.roompulse.internal",
+        #     "port": 8888,
+        #     "username": "obc54l60asl2hw3ef8cfwy",
+        #     "password": "chp0pm7ruvl57gnhz1tn"
+        # }
+                # "proxy_host": "202.68.181.43",
+
+        #  working us iproyal
+        # proxy: ProxyStructureType = {
+        #     "host": "88.216.46.37",
         #     "port": 12323,
         #     "username": "14ab59fe1cc10",
         #     "password": "07c7b5a1e1"
         # }
+        proxy: ProxyStructureType = {
+        "host": "51.159.157.219",
+        "port": 9000,
+        "username": "geonode_lMtU7NlVhq-country-us",
+        "password": "6cab342c-0f28-4635-9573-2ea5c7867313"
+        }
+
+        # proxy: ProxyStructureType = {
+        #     "host": "51.159.157.219",
+        #     "port": 9000,
+        #     "username": "geonode_lMtU7NlVhq-country-tr",
+        #     "password": "6cab342c-0f28-4635-9573-2ea5c7867313",
+        # }
+
         plain_playwright_browser_testing(playwright, proxy)
 
 

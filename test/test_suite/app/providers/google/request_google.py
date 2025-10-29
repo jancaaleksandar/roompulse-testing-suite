@@ -18,7 +18,7 @@ class RequestFailedGoogleRequest(Exception):
     pass
 
 
-def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleRequestResponse:
+def google_request(params: UserInput, maximum_retries: int = 25) -> GoogleRequestResponse:
     """Execute a Google request with retries"""
     response_data = None
     successfully_scraped = False
@@ -56,8 +56,13 @@ def google_request(params: UserInput, maximum_retries: int = 15) -> GoogleReques
         except (RequestFailedGoogleRequest, ValueError, ProxyError, Timeout) as e:
             print(f"⚠️  Request retry {i + 1} failed: {e}")
             if i < maximum_retries - 1:  # Don't sleep on last retry
-                wait_seconds = 3
+                wait_seconds = 4
                 print(f"Waiting {wait_seconds} seconds before next retry")
                 time.sleep(wait_seconds)
+    
+    # If we exhausted all retries and didn't succeed, raise ProxyConnectionEstablishmentError
+    if not successfully_scraped:
+        from ...exceptions import ProxyConnectionEstablishmentError
+        raise ProxyConnectionEstablishmentError(f"All {maximum_retries} retries failed")
 
     return GoogleRequestResponse(response=response_data or "", successfully_scraped=successfully_scraped, response_headers=response_headers)

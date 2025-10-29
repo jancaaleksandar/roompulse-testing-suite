@@ -8,11 +8,12 @@ from .service.check_proxy_currency_google_service import check_proxy_currency_go
 def entrypoint_google(params : UserInput) -> Any:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if params["request_type"] == "PROXY_TESTING":
-        test_results = check_proxy_currency_google_service(params)
-        with open(f"test/test_suite/app/providers/google/debug/proxy_testing_{timestamp}.json", "w") as f:
-            json.dump(test_results, f, indent=4)
-        
-    return google_request(params)
+        all_tests = []
+        for i in range(12):
+            test_results = check_proxy_currency_google_service(params)
+            all_tests.extend(test_results)
+            with open(f"test/test_suite/app/providers/google/debug/proxy_testing_{timestamp}.json", "w") as f:
+                json.dump(all_tests, f, indent=4)
 
 
 if __name__ == "__main__":

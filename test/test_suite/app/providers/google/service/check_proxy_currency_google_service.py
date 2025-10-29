@@ -4,9 +4,9 @@ from ..common.clean_response_common import CleanResponse
 from ..parsers.place_parser import SinglePlaceParser
 from ..request_google import google_request
 from ....utils.get_all_proxies import get_all_proxies_from_file
-from ....exceptions import MissingProxyURL, CheckProxyCurrencyServiceError
+from ....exceptions import MissingProxyURL, CheckProxyCurrencyServiceError, ProxyConnectionEstablishmentError
 from ....types import TestResults
-
+from ..utils.proxy_validity_checker import ProxyValidityChecker
 
 
 def check_proxy_currency_google_service(params: UserInput) -> list[TestResults]:
@@ -28,6 +28,9 @@ def check_proxy_currency_google_service(params: UserInput) -> list[TestResults]:
 
         try:
             expected_outcome = proxy.get("proxy_expected_outcome") if proxy.get("proxy_expected_outcome") else proxy["proxy_iso"]
+            proxy_location = proxy["proxy_location"]
+            if not proxy_location:
+                raise MissingProxyURL("Proxy location is required")
             params["request_proxy"] = proxy_url
             print(f"\nTrying proxy: {proxy_url}")
 
@@ -99,19 +102,6 @@ def check_proxy_currency_google_service(params: UserInput) -> list[TestResults]:
                 )
                 continue
 
-            # Remove the early exit for None country_code - we'll check currency instead
-            # if country_code is None and response_currency is not None:
-            #     print(f"Country code is None with proxy {proxy_url} - marking as WRONG PROXY")
-            #     test_results.append(
-            #         TestResults(
-            #             test_passed=False,
-            #             test_expected_outcome=expected_outcome,
-            #             test_proxy_url=f"{proxy_url} (WRONG - country_code is None)",
-            #             test_proxy_result=f"Country code not found (currency: {response_currency}) - X-Frame-Options: {x_frame_options}",
-            #         )
-            #     )
-            #     continue
-
             if not single_place_parser_response["providers"] or len(single_place_parser_response["providers"]) == 0:
                 print(f"No providers found with proxy {proxy_url} response : {single_place_parser_response}")
                 test_results.append(
@@ -127,54 +117,52 @@ def check_proxy_currency_google_service(params: UserInput) -> list[TestResults]:
             with open("test/test_suite/app/providers/google/debug/parsed_providers.json", "w") as f:
                 json.dump(single_place_parser_response, f, indent=4)
 
-            # Check if expected outcome matches either country code OR currency
-            match_found = False
-            for provider in single_place_parser_response["providers"]:
-                provider_url = provider.get("provider_offer_url", None)
-                if not provider_url:
-                    print("No provider URL found")
-                    continue
-                print(f"Provider URL: {provider_url}")
-                print(f"Expected outcome: {expected_outcome}")
-                print(f"Country code from response: {country_code}")
-                print(f"Response currency: {response_currency}")
-
-                # Match if expected outcome equals country code OR currency
-                if str(expected_outcome) == str(country_code) or str(expected_outcome) == str(response_currency):
-                    print(f"Found matching provider with proxy {proxy_url}")
-                    test_results.append(
-                        TestResults(
-                            test_passed=True,
-                            test_proof_url=provider_url,
-                            test_expected_outcome=expected_outcome,
-                            test_proxy_url=proxy_url,
-                            test_proxy_result=f"{country_code} - {response_currency} - X-Frame-Options: {x_frame_options}",
-                        )
-                    )
-                    print(f"Successfully found matching provider with proxy {proxy_url}")
-                    match_found = True
-                    break
+            # Use ProxyValidityChecker to validate the proxy response
+            print(f"Using ProxyValidityChecker for location: {proxy_location}, expected: {expected_outcome}")
+            validator = ProxyValidityChecker(
+                location=proxy_location,
+                expected_result=expected_outcome,
+                response=single_place_parser_response
+            )
             
-            if not match_found:
-                # No match found - but provide different message if country_code is None
+            is_valid = validator.validate()
+            
+            if is_valid:
+                # Find a provider URL for proof
+                provider_url = None
+                for provider in single_place_parser_response["providers"]:
+                    provider_url = provider.get("provider_offer_url", None)
+                    if provider_url:
+                        break
+                
+                print(f"✅ Proxy validation PASSED with proxy {proxy_url}")
+                test_results.append(
+                    TestResults(
+                        test_passed=True,
+                        test_proof_url=provider_url,
+                        test_expected_outcome=expected_outcome,
+                        test_proxy_url=proxy_url,
+                        test_proxy_result=f"{country_code} - {response_currency} - X-Frame-Options: {x_frame_options}",
+                    )
+                )
+            else:
+                print(f"❌ Proxy validation FAILED with proxy {proxy_url}")
                 if country_code is None:
-                    print(f"Country code is None with proxy {proxy_url}, currency: {response_currency}, expected: {expected_outcome}")
                     test_results.append(
                         TestResults(
                             test_passed=False,
                             test_expected_outcome=expected_outcome,
                             test_proxy_url=f"{proxy_url} (country_code is None)",
-                            test_proxy_result=f"Country code not found, currency mismatch (got currency: {response_currency}, expected: {expected_outcome}) - X-Frame-Options: {x_frame_options}",
+                            test_proxy_result=f"Country code not found, validation failed (got currency: {response_currency}, expected: {expected_outcome}) - X-Frame-Options: {x_frame_options}",
                         )
                     )
                 else:
-                    print(f"No match found for expected outcome '{expected_outcome}' (got: {country_code}/{response_currency})")
                     test_results.append(
                         TestResults(
                             test_passed=False,
                             test_expected_outcome=expected_outcome,
                             test_proxy_url=proxy_url,
-                            test_proxy_result=f"Mismatch (got: {country_code} - {response_currency}, expected: {expected_outcome}) - X-Frame-Options: {x_frame_options}",
+                            test_proxy_result=f"Validation failed (got: {country_code} - {response_currency}, expected: {expected_outcome}) - X-Frame-Options: {x_frame_options}",
                         )
                     )
 
@@ -201,5 +189,16 @@ def check_proxy_currency_google_service(params: UserInput) -> list[TestResults]:
                 )
             )
             continue
-                
+
+        except ProxyConnectionEstablishmentError as e:
+            print(f"Error with proxy {proxy_url}: {e!s}")
+            test_results.append(
+                TestResults(
+                    test_passed=False,
+                    test_expected_outcome=proxy.get("proxy_iso", "unknown"),
+                    test_proxy_url=proxy_url,
+                    test_proxy_result=f"Error: {e!s}",
+                )
+            )
+            
     return test_results

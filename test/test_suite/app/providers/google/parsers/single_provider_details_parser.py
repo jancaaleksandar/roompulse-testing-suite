@@ -40,6 +40,7 @@ class ParseSingleProviderDetails:
 
     def get_provider_price(self) -> dict[str, float | str]:
         raw_price = self.response[1]
+        print(f"raw_price: {raw_price}")
 
         # If raw_price is already a dictionary with amount and currency
         if isinstance(raw_price, dict) and "amount" in raw_price and "currency" in raw_price:
@@ -65,6 +66,8 @@ class ParseSingleProviderDetails:
                 "CHF": "CHF",
                 "A$": "AUD",
                 "C$": "CAD",
+                "₺": "TRY"
+
                 # Add more currency mappings as needed
             }
 
